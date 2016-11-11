@@ -21,6 +21,10 @@ func main() {
 	flag.Parse()
 
 	args := flag.Args()
+	if len(args) == 0 {
+		flag.Usage()
+		os.Exit(2)
+	}
 
 	targs := make([]*template.Template, len(args))
 	for i, arg := range args {
