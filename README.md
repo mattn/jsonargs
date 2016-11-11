@@ -1,6 +1,6 @@
 # jsonargs
 
-xargs for JSON
+xargs for JSON stream
 
 ## Usage
 
