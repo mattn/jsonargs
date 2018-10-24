@@ -15,6 +15,7 @@ import (
 var (
 	failOnError = flag.Bool("f", false, "fail on error")
 	parallel    = flag.Bool("p", false, "parallel")
+	array       = flag.Bool("a", false, "input array")
 )
 
 func main() {
@@ -33,6 +34,37 @@ func main() {
 			log.Fatal(err)
 		}
 		targs[i] = t
+	}
+
+	if *array {
+		var vv []interface{}
+		err := json.NewDecoder(os.Stdin).Decode(&vv)
+		if err != nil {
+			log.Fatal(err)
+		}
+		for _, v := range vv {
+			xargs := make([]string, len(targs))
+			for i, t := range targs {
+				var buf bytes.Buffer
+				err = t.Execute(&buf, v)
+				if err != nil {
+					log.Fatal(err)
+				}
+				xargs[i] = buf.String()
+			}
+			cmd := exec.Command(xargs[0], xargs[1:]...)
+			cmd.Stdout = os.Stdout
+			cmd.Stderr = os.Stderr
+			if *parallel {
+				err = cmd.Start()
+			} else {
+				err = cmd.Run()
+			}
+			if *failOnError && err != nil {
+				log.Fatal(err)
+			}
+		}
+		return
 	}
 
 	scan := bufio.NewScanner(os.Stdin)
