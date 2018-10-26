@@ -16,6 +16,7 @@ var (
 	failOnError = flag.Bool("f", false, "fail on error")
 	parallel    = flag.Bool("p", false, "parallel")
 	array       = flag.Bool("a", false, "input array")
+	wait        = flag.Bool("P", false, "parallel ant wait all")
 )
 
 func main() {
@@ -27,6 +28,10 @@ func main() {
 		os.Exit(2)
 	}
 
+	if *wait {
+		*parallel = true
+	}
+
 	targs := make([]*template.Template, len(args))
 	for i, arg := range args {
 		t, err := template.New(fmt.Sprintf("arg%d", i)).Parse(arg)
@@ -35,6 +40,7 @@ func main() {
 		}
 		targs[i] = t
 	}
+	var cmds []*exec.Cmd
 
 	if *array {
 		var vv []interface{}
@@ -57,11 +63,19 @@ func main() {
 			cmd.Stderr = os.Stderr
 			if *parallel {
 				err = cmd.Start()
+				if *wait {
+					cmds = append(cmds, cmd)
+				}
 			} else {
 				err = cmd.Run()
 			}
 			if *failOnError && err != nil {
 				log.Fatal(err)
+			}
+		}
+		if *parallel && *wait {
+			for _, cmd := range cmds {
+				cmd.Wait()
 			}
 		}
 		return
@@ -92,6 +106,9 @@ func main() {
 		cmd.Stderr = os.Stderr
 		if *parallel {
 			err = cmd.Start()
+			if *wait {
+				cmds = append(cmds, cmd)
+			}
 		} else {
 			err = cmd.Run()
 		}
@@ -100,6 +117,11 @@ func main() {
 		}
 	}
 
+	if *parallel && *wait {
+		for _, cmd := range cmds {
+			cmd.Wait()
+		}
+	}
 	if err := scan.Err(); err != nil {
 		log.Fatal(err)
 	}
