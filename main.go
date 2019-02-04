@@ -9,6 +9,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"strings"
 	"text/template"
 )
 
@@ -17,6 +18,11 @@ var (
 	parallel    = flag.Bool("p", false, "parallel")
 	array       = flag.Bool("a", false, "input array")
 	wait        = flag.Bool("P", false, "parallel ant wait all")
+
+	replacer = strings.NewReplacer(
+		"\r", "",
+		"\n", "",
+	)
 )
 
 func main() {
@@ -32,9 +38,18 @@ func main() {
 		*parallel = true
 	}
 
+	funcs := template.FuncMap{
+		"trim": func(s string) string {
+			return strings.TrimSpace(s)
+		},
+		"replace": func(s1, s2, s string) string {
+			return strings.Replace(s, s1, s2, -1)
+		},
+	}
+
 	targs := make([]*template.Template, len(args))
 	for i, arg := range args {
-		t, err := template.New(fmt.Sprintf("arg%d", i)).Parse(arg)
+		t, err := template.New(fmt.Sprintf("arg%d", i)).Funcs(funcs).Parse(arg)
 		if err != nil {
 			log.Fatal(err)
 		}
