@@ -18,11 +18,6 @@ var (
 	parallel    = flag.Bool("p", false, "parallel")
 	array       = flag.Bool("a", false, "input array")
 	wait        = flag.Bool("P", false, "parallel ant wait all")
-
-	replacer = strings.NewReplacer(
-		"\r", "",
-		"\n", "",
-	)
 )
 
 func main() {
